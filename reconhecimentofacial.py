@@ -17,33 +17,40 @@ def criar_tabela():
 
 def cadastrar_usuario(nome):
     cap = cv2.VideoCapture(0)
-    print("Posicione seu rosto na câmera e pressione 'q' para capturar")
+    print("Posicione seu rosto na câmera e aguarde o sistema detectar automaticamente")
+    
+def cadastrar_usuario(nome):
+    cap = cv2.VideoCapture(0)
+    print("Posicione seu rosto na câmera e aguarde o sistema detectar automaticamente.")
     
     while True:
         ret, frame = cap.read()
         cv2.imshow("Cadastro", frame)
 
-        # Espera até que a tecla 'q' seja pressionada
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            face_locations = face_recognition.face_locations(frame)  # Detecta a face
-            if face_locations:
-                face_encoding = face_recognition.face_encodings(frame, face_locations)[0]  # Codifica a face
-                
-                # Salva a imagem capturada
-                imagem_path = f"imagens/{nome}_imagem.jpg"
-                if not os.path.exists("imagens"):
-                    os.makedirs("imagens")
-                cv2.imwrite(imagem_path, frame)  # Salva a imagem como .jpg
+        # Detecta o rosto em tempo real
+        face_locations = face_recognition.face_locations(frame)
+        
+        if face_locations:
+            face_encoding = face_recognition.face_encodings(frame, face_locations)[0]  # Codifica a face
+            
+            # Salva a imagem
+            imagem_path = f"imagens/{nome}_imagem.jpg"
+            if not os.path.exists("imagens"):
+                os.makedirs("imagens")
+            cv2.imwrite(imagem_path, frame)  # Salva a imagem capturada
 
-                # Salva no banco de dados
-                salvar_no_banco(nome, face_encoding, imagem_path)
-                print("Usuário cadastrado com sucesso!")
-                break
-            else:
-                print("Nenhum rosto detectado. Tente novamente.")
+            # Salva no banco de dados
+            salvar_no_banco(nome, face_encoding, imagem_path)
+            print("Usuário cadastrado com sucesso!")
+            break
+        
+        # Pode adicionar um tempo de espera ou uma mensagem, caso o rosto não seja encontrado
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
     
     cap.release()
     cv2.destroyAllWindows()
+
 
 def salvar_no_banco(nome, face_encoding, imagem_path):
     # Converte a imagem para binário para armazenar no banco de dados
@@ -71,36 +78,39 @@ def reconhecer_usuario():
         ret, frame = cap.read()
         cv2.imshow("Reconhecimento", frame)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            face_locations = face_recognition.face_locations(frame)
-            if face_locations:
-                face_encoding = face_recognition.face_encodings(frame, face_locations)[0]
+        face_locations = face_recognition.face_locations(frame)
+        
+        if face_locations:
+            face_encoding = face_recognition.face_encodings(frame, face_locations)[0]
+            
+            for nome, encoding, imagem_bin in usuarios:
+                stored_encoding = np.frombuffer(encoding, dtype=np.float64)
+                match = face_recognition.compare_faces([stored_encoding], face_encoding)[0]
                 
-                for nome, encoding, imagem_bin in usuarios:
-                    stored_encoding = np.frombuffer(encoding, dtype=np.float64)
-                    match = face_recognition.compare_faces([stored_encoding], face_encoding)[0]
+                if match:
+                    print(f"Bem-vindo, {nome}!")
                     
-                    if match:
-                        print(f"Bem-vindo, {nome}!")
-                        
-                        # Exibir a imagem associada ao usuário
-                        imagem_path = f"imagens/{nome}_imagem.jpg"
-                        with open(imagem_path, "wb") as f:
-                            f.write(imagem_bin)  # Salva a imagem binária em um arquivo para exibir
-                        img = cv2.imread(imagem_path)
-                        cv2.imshow(f"{nome}'s Foto", img)
-                        cv2.waitKey(0)  # Espera até pressionar qualquer tecla
-                        cv2.destroyAllWindows()
-                        
-                        cap.release()
-                        cv2.destroyAllWindows()
-                        return
-                print("Rosto não reconhecido.")
-            else:
-                print("Nenhum rosto detectado. Tente novamente.")
-    
+                    # Exibir a imagem associada ao usuário
+                    imagem_path = f"imagens/{nome}_imagem.jpg"
+                    with open(imagem_path, "wb") as f:
+                        f.write(imagem_bin)  # Salva a imagem binária em um arquivo para exibir
+                    img = cv2.imread(imagem_path)
+                    cv2.imshow(f"{nome}'s Foto", img)
+                    cv2.waitKey(0)  # Espera até pressionar qualquer tecla
+                    cv2.destroyAllWindows()
+                    
+                    cap.release()
+                    cv2.destroyAllWindows()
+                    return
+            print("Rosto não reconhecido.")
+        
+        # Pausa ou verifica o rosto a cada frame
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
     cap.release()
     cv2.destroyAllWindows()
+
 
 # Criar banco de dados ao iniciar o código
 criar_tabela()
