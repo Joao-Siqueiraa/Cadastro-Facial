@@ -21,3 +21,13 @@ def criar_tabelas():
 
     conn.commit()
     conn.close()
+
+# Em database.py
+
+def obter_historico():
+    conn = sqlite3.connect("faces.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT nome, data_hora FROM historico_logins ORDER BY data_hora DESC")
+    logins = cursor.fetchall()
+    conn.close()
+    return logins  # Retorna os registros encontrados
