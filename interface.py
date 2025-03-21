@@ -46,6 +46,7 @@ def criar_interface():
     root.title("Cadastro Facial")
     root.geometry("400x300")
     root.configure(bg=COR_FUNDO)
+    root.iconbitmap(default="icone/icone.ico")
 
     # Título
     titulo = tk.Label(root, text='Cadastro Facial', font=("arial", 14), bg=COR_FUNDO, fg=COR_TEXTO)
